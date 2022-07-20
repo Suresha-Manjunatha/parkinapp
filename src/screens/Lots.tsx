@@ -1,5 +1,6 @@
 /** @format */
 
+import axios from "axios";
 import React, { FC, useEffect, useState } from "react";
 import {
   Button,
@@ -14,7 +15,15 @@ import {
 import { Snackbar } from "react-native-paper";
 import { style } from "../styles/style";
 
-const Lots: FC<any> = (props) => {
+type lotsPropsType = {
+  route: {
+    params: {
+      lots: number;
+    };
+  };
+};
+
+const Lots: FC<lotsPropsType> = (props) => {
   const [lotsList, setLotsList] = useState<any[]>([]);
   const [currentLot, setCurrentLot] = useState<number>(0);
   const [freeLotsList, setFreeLotsList] = useState<any[]>(lotsList);
@@ -22,6 +31,7 @@ const Lots: FC<any> = (props) => {
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [showRemoveModal, setShowRemoveModal] = useState<boolean>(false);
   const [showSnack, setShowSnack] = useState<boolean>(false);
+  const [regid, setRegid] = useState<any>();
 
   const [hrs, setHrs] = useState<number>(0);
   const [amnt, setAmnt] = useState<number>(0);
@@ -69,15 +79,18 @@ const Lots: FC<any> = (props) => {
     }
   }
 
-  function handleRemove() {
+  function handleRemove(reg: any) {
     !lotsList[currentLot].free && setShowRemoveModal(true);
+    setRegid(reg);
   }
 
   function calculateHrsAmt() {
     const timeDiffms = Math.abs(
       lotsList[currentLot].start.getTime() - new Date().getTime()
     );
+    console.log(timeDiffms);
     const timeDiffHrs = Math.floor(timeDiffms / (1000 * 60 * 60));
+    console.log(timeDiffHrs);
     setHrs(timeDiffHrs);
 
     if (timeDiffHrs <= 2) {
@@ -90,10 +103,18 @@ const Lots: FC<any> = (props) => {
   return (
     <SafeAreaView testID="lots" style={style.container2}>
       {/* Add Modal */}
-      <Modal visible={showAddModal} animationType="slide">
+      <Snackbar
+        visible={showSnack}
+        onDismiss={() => setShowSnack(false)}
+        style={style.snack}
+      >
+        <Text style={style.snackText}>the parking is full</Text>
+      </Snackbar>
+      <Modal testID="add" visible={showAddModal} animationType="slide">
         <View style={style.modal}>
           <Text>Add Vehicle to P{currentLot}</Text>
           <TextInput
+            testID="txt1"
             placeholder="Enterv reg. number"
             placeholderTextColor={"grey"}
             onChangeText={(text) => {
@@ -104,6 +125,7 @@ const Lots: FC<any> = (props) => {
 
           <View style={style.buttonRow}>
             <Button
+              testID="btn1"
               disabled={reg.length == 0}
               title="Add"
               onPress={() => {
@@ -125,6 +147,7 @@ const Lots: FC<any> = (props) => {
               }}
             />
             <Button
+              testID="btn2"
               title="Cancel"
               onPress={() => {
                 setShowAddModal(false);
@@ -135,6 +158,7 @@ const Lots: FC<any> = (props) => {
       </Modal>
       {/* Remove Modal */}
       <Modal
+        testID="remove"
         visible={showRemoveModal}
         onShow={() => {
           calculateHrsAmt();
@@ -148,11 +172,21 @@ const Lots: FC<any> = (props) => {
 
           <View style={style.buttonRow}>
             <Button
+              testID="btn3"
               title="Remove"
               onPress={() => {
+                const flag = false;
+                axios
+                  .post("https://httpstat.us/200", {
+                    car_registration: regid,
+                    charge: amnt,
+                  })
+                  .then((res: any) => {
+                    console.log(res);
+                  });
                 setLotsList(
                   lotsList.map((lot) => {
-                    return lot.id == currentLot
+                    return lot.id === currentLot
                       ? {
                           ...lot,
                           free: true,
@@ -168,6 +202,7 @@ const Lots: FC<any> = (props) => {
               }}
             />
             <Button
+              testID="btn4"
               title="Cancel"
               onPress={() => {
                 setAmnt(0);
@@ -179,32 +214,29 @@ const Lots: FC<any> = (props) => {
         </View>
       </Modal>
 
-      <Snackbar
-        visible={showSnack}
-        onDismiss={() => setShowSnack(false)}
-        style={style.snack}
+      <TouchableOpacity
+        style={{
+          width: "100%",
+          // display: "flex",
+          // justifyContent: "space-between",
+          // alignItems: "center",
+        }}
       >
-        <Text style={style.snackText}>the parking is full</Text>
-      </Snackbar>
-
-      <TouchableOpacity onPress={() => handleAdd(true)} style={style.lots}>
         <FlatList
+          testID="list"
           data={lotsList}
-          numColumns={4}
+          horizontal={false}
+          // numColumns={2}
           renderItem={({ item }) => (
             <TouchableOpacity
+              testID={`test-${item.id}`}
+              style={{ width: "100%", paddingRight: "20px" }}
               onPress={() => {
                 setCurrentLot(item.id);
-                item.free ? handleAdd(false) : handleRemove();
+                item.free ? handleAdd(false) : handleRemove(item.reg);
               }}
             >
-              <View
-                style={{
-                  ...style.item,
-                  backgroundColor: item.free ? "green" : "red",
-                  marginBottom: "10px",
-                }}
-              >
+              <View style={item.free ? style.item : style.item1}>
                 <Text style={style.itemText}>P{item.id}</Text>
                 <Text style={style.itemText}>
                   {item.free ? "Free" : `Occupied by ${item.reg}`}
@@ -213,6 +245,24 @@ const Lots: FC<any> = (props) => {
             </TouchableOpacity>
           )}
         />
+        <View
+          style={{
+            width: "100%",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            // minHeight: "90vh",
+          }}
+        >
+          <View style={{ width: "30%" }}>
+            <Button
+              testID="btnadd"
+              title="Add Vehicle"
+              onPress={() => handleAdd(true)}
+              color="orange"
+            />
+          </View>
+        </View>
       </TouchableOpacity>
     </SafeAreaView>
   );

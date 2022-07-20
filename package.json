@@ -8,7 +8,10 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "eject": "expo eject",
-    "test": "yarn jest"
+    "test": "jest --verbose --coverage",
+    "test:update": "jest --verbose --coverage --updateSnapshot",
+    "test:watch": "jest --verbose --watch",
+    "coverage": "jest --verbose --coverage && open ./coverage/lcov-report/index.html"
   },
   "dependencies": {
     "@react-navigation/native": "^6.0.11",
@@ -29,7 +32,7 @@
     "@babel/core": "^7.12.9",
     "@testing-library/jest-native": "^4.0.5",
     "@testing-library/react-native": "^10.1.1",
-    "@types/react": "~17.0.21",
+    "@types/react": "^18.0.15",
     "@types/react-native": "~0.66.13",
     "jest": "^27.5.1",
     "jest-expo": "^45.0.1",
